@@ -1,0 +1,9 @@
+---
+# Master playbook to provision both VMs
+- name: Provision all servers
+  import_playbook: frontend.yml
+  tags: [frontend]
+
+- name: Provision backend server
+  import_playbook: backend.yml
+  tags: [backend]

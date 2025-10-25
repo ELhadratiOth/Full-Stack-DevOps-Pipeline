@@ -1,0 +1,280 @@
+---
+# Optimized playbook for Backend VM
+- name: Configure Backend Server
+  hosts: backend
+  become: yes
+  gather_facts: yes
+
+  vars:
+    db_host: 'microservice-db-do-user-27173136-0.k.db.ondigitalocean.com'
+    db_port: 25060
+
+  pre_tasks:
+    - name: Update and upgrade apt packages
+      apt:
+        upgrade: yes
+        update_cache: yes
+        cache_valid_time: 3600
+      tags: [always]
+
+  tasks:
+    # Common setup - Essential packages
+    - name: Install essential system packages
+      apt:
+        name:
+          - curl
+          - wget
+          - git
+          - vim
+          - htop
+          - ufw
+          - openssh-server
+          - openssh-client
+          - software-properties-common
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - lsb-release
+          - build-essential
+          - pkg-config
+          - unattended-upgrades
+          - fail2ban
+          - python3
+          - python3-pip
+          - python3-setuptools
+        state: present
+      tags: [setup]
+
+    # Docker installation (optimized)
+    - name: Check if Docker is installed
+      command: docker --version
+      register: docker_installed
+      ignore_errors: yes
+      changed_when: false
+      tags: [docker]
+
+    - name: Install Docker and Docker Compose
+      block:
+        - name: Create keyrings directory
+          file:
+            path: /etc/apt/keyrings
+            state: directory
+            mode: '0755'
+
+        - name: Add Docker GPG key
+          shell: |
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+            chmod a+r /etc/apt/keyrings/docker.gpg
+          args:
+            creates: /etc/apt/keyrings/docker.gpg
+
+        - name: Add Docker repository
+          apt_repository:
+            repo: 'deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable'
+            state: present
+            filename: docker
+
+        - name: Install Docker packages
+          apt:
+            name:
+              - docker-ce
+              - docker-ce-cli
+              - containerd.io
+              - docker-buildx-plugin
+              - docker-compose-plugin
+            state: present
+            update_cache: yes
+
+        - name: Start and enable Docker service
+          systemd:
+            name: docker
+            enabled: yes
+            state: started
+
+        - name: Add Docker log rotation
+          copy:
+            dest: /etc/docker/daemon.json
+            content: |
+              {
+                "log-driver": "json-file",
+                "log-opts": {
+                  "max-size": "10m",
+                  "max-file": "3"
+                }
+              }
+            mode: '0644'
+          notify: Restart Docker
+      when: docker_installed.rc != 0
+      tags: [docker]
+
+    # PostgreSQL client
+    - name: Install PostgreSQL client and development libraries
+      apt:
+        name:
+          - postgresql-client
+          - libpq-dev
+        state: present
+      tags: [postgres]
+
+    # Additional backend tools
+    - name: Install monitoring and debugging tools
+      apt:
+        name:
+          - net-tools
+          - dnsutils
+          - telnet
+          - sysstat
+          - iotop
+        state: present
+      tags: [tools]
+
+    # Security - SSH hardening
+    - name: Configure SSH security
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?{{ item.key }}'
+        line: '{{ item.key }} {{ item.value }}'
+        state: present
+      loop:
+        - { key: 'PermitRootLogin', value: 'yes' }
+        - { key: 'PasswordAuthentication', value: 'no' }
+        - { key: 'PubkeyAuthentication', value: 'yes' }
+        - { key: 'X11Forwarding', value: 'no' }
+        - { key: 'MaxAuthTries', value: '3' }
+        - { key: 'ClientAliveInterval', value: '300' }
+        - { key: 'ClientAliveCountMax', value: '2' }
+      notify: Restart SSH
+      tags: [security, ssh]
+
+    # Security - Fail2ban configuration
+    - name: Configure Fail2ban for SSH
+      copy:
+        dest: /etc/fail2ban/jail.local
+        content: |
+          [DEFAULT]
+          bantime = 3600
+          findtime = 600
+          maxretry = 3
+
+          [sshd]
+          enabled = true
+          port = 22
+          logpath = /var/log/auth.log
+        mode: '0644'
+      notify: Restart Fail2ban
+      tags: [security]
+
+    - name: Start and enable Fail2ban
+      systemd:
+        name: fail2ban
+        enabled: yes
+        state: started
+      tags: [security]
+
+    # Security and firewall
+    - name: Configure UFW firewall rules
+      block:
+        - name: Set UFW default policies
+          ufw:
+            policy: deny
+            direction: incoming
+
+        - name: Allow SSH
+          ufw:
+            rule: allow
+            port: '22'
+            proto: tcp
+            comment: 'SSH access'
+
+        - name: Allow backend API port
+          ufw:
+            rule: allow
+            port: '8000'
+            proto: tcp
+            comment: 'Backend API'
+
+        - name: Allow outgoing connections
+          ufw:
+            policy: allow
+            direction: outgoing
+
+        - name: Enable UFW logging
+          ufw:
+            logging: 'on'
+
+        - name: Enable UFW
+          ufw:
+            state: enabled
+      tags: [firewall]
+
+    # Create application directory
+    - name: Create application directory
+      file:
+        path: /opt/backend
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+      tags: [app]
+
+    # Optimization
+    - name: Set timezone
+      timezone:
+        name: Europe/Berlin
+      tags: [optimization]
+
+    - name: Configure system limits for high performance
+      pam_limits:
+        domain: '*'
+        limit_type: '-'
+        limit_item: nofile
+        value: '65535'
+      tags: [optimization]
+
+    - name: Disable swap for better performance
+      shell: swapoff -a
+      when: ansible_swaptotal_mb > 0
+      tags: [optimization]
+
+    # System hardening
+    - name: Disable IPv6 if not needed
+      sysctl:
+        name: '{{ item }}'
+        value: '1'
+        state: present
+        reload: yes
+      loop:
+        - net.ipv6.conf.all.disable_ipv6
+        - net.ipv6.conf.default.disable_ipv6
+      tags: [security, hardening]
+
+    - name: Configure kernel security parameters
+      sysctl:
+        name: '{{ item.key }}'
+        value: '{{ item.value }}'
+        state: present
+        reload: yes
+      loop:
+        - { key: 'net.ipv4.conf.all.rp_filter', value: '1' }
+        - { key: 'net.ipv4.conf.default.rp_filter', value: '1' }
+        - { key: 'net.ipv4.icmp_echo_ignore_broadcasts', value: '1' }
+        - { key: 'net.ipv4.conf.all.accept_source_route', value: '0' }
+        - { key: 'net.ipv4.conf.default.accept_source_route', value: '0' }
+        - { key: 'net.ipv4.tcp_syncookies', value: '1' }
+      tags: [security, hardening]
+
+  handlers:
+    - name: Restart Docker
+      systemd:
+        name: docker
+        state: restarted
+
+    - name: Restart SSH
+      systemd:
+        name: sshd
+        state: restarted
+
+    - name: Restart Fail2ban
+      systemd:
+        name: fail2ban
+        state: restarted

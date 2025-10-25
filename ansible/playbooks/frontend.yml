@@ -1,0 +1,152 @@
+---
+# Optimized playbook for Frontend VM
+- name: Configure Frontend Server
+  hosts: frontend
+  become: yes
+  gather_facts: yes
+
+  vars:
+    nodejs_version: '20'
+
+  pre_tasks:
+    - name: Update and upgrade apt packages
+      apt:
+        upgrade: yes
+        update_cache: yes
+        cache_valid_time: 3600
+      tags: [always]
+
+  tasks:
+    # Common setup
+    - name: Install essential packages
+      apt:
+        name:
+          - curl
+          - wget
+          - git
+          - vim
+          - htop
+          - ufw
+          - software-properties-common
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
+          - lsb-release
+        state: present
+      tags: [setup]
+
+    # Node.js installation (optimized)
+    - name: Check if Node.js is installed
+      command: node --version
+      register: node_installed
+      ignore_errors: yes
+      changed_when: false
+      tags: [nodejs]
+
+    - name: Install Node.js from NodeSource
+      block:
+        - name: Download and execute NodeSource setup script
+          shell: |
+            curl -fsSL https://deb.nodesource.com/setup_{{ nodejs_version }}.x | bash -
+          args:
+            creates: /etc/apt/sources.list.d/nodesource.list
+
+        - name: Install Node.js
+          apt:
+            name: nodejs
+            state: present
+            update_cache: yes
+      when: node_installed.rc != 0
+      tags: [nodejs]
+
+    # Docker installation (optimized)
+    - name: Check if Docker is installed
+      command: docker --version
+      register: docker_installed
+      ignore_errors: yes
+      changed_when: false
+      tags: [docker]
+
+    - name: Install Docker
+      block:
+        - name: Create keyrings directory
+          file:
+            path: /etc/apt/keyrings
+            state: directory
+            mode: '0755'
+
+        - name: Add Docker GPG key
+          shell: |
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+            chmod a+r /etc/apt/keyrings/docker.gpg
+          args:
+            creates: /etc/apt/keyrings/docker.gpg
+
+        - name: Add Docker repository
+          apt_repository:
+            repo: 'deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable'
+            state: present
+            filename: docker
+
+        - name: Install Docker packages
+          apt:
+            name:
+              - docker-ce
+              - docker-ce-cli
+              - containerd.io
+              - docker-buildx-plugin
+              - docker-compose-plugin
+            state: present
+            update_cache: yes
+
+        - name: Start and enable Docker service
+          systemd:
+            name: docker
+            enabled: yes
+            state: started
+      when: docker_installed.rc != 0
+      tags: [docker]
+
+    # Security and firewall
+    - name: Configure firewall rules
+      block:
+        - name: Allow SSH
+          ufw:
+            rule: allow
+            port: '22'
+            proto: tcp
+
+        - name: Allow HTTP
+          ufw:
+            rule: allow
+            port: '80'
+            proto: tcp
+
+        - name: Allow HTTPS
+          ufw:
+            rule: allow
+            port: '443'
+            proto: tcp
+
+        - name: Allow Node.js app port
+          ufw:
+            rule: allow
+            port: '3000'
+            proto: tcp
+
+        - name: Enable UFW
+          ufw:
+            state: enabled
+            policy: deny
+      tags: [firewall]
+
+    # Optimization
+    - name: Set timezone
+      timezone:
+        name: Europe/Berlin
+      tags: [optimization]
+
+    - name: Disable swap for better performance
+      shell: swapoff -a
+      when: ansible_swaptotal_mb > 0
+      tags: [optimization]

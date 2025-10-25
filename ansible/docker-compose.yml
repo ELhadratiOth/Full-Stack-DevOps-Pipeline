@@ -1,0 +1,19 @@
+version: '3.9'
+
+services:
+  ansible:
+    container_name: ansible
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./playbooks:/ansible/playbooks
+      - ./inventory:/ansible/inventory
+      - ansible_data:/root/.ansible
+      - ${USERPROFILE}/.ssh:/tmp/ssh-keys:ro
+    working_dir: /ansible
+    tty: true
+    stdin_open: true
+
+volumes:
+  ansible_data:

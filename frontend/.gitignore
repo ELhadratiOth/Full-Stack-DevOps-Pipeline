@@ -1,0 +1,16 @@
+.node_modules.swcrc
+.next
+dist
+build
+.env.local
+.env.*.local
+npm-debug.log
+yarn-error.log
+.idea
+.vscode
+*.swp
+*.swo
+*~
+.DS_Store
+.coverage
+.pytest_cache

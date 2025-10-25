@@ -1,0 +1,119 @@
+# Sensitive Data - DO NOT COMMIT
+*.pem
+*.key
+*.pub
+id_rsa*
+id_ed25519*
+id_ecdsa*
+*.ppk
+*.crt
+*.p12
+*.jks
+*.keystore
+
+# Terraform sensitive files
+terraform/digitalocean/terraform.tfstate
+terraform/digitalocean/terraform.tfstate.backup
+terraform/digitalocean/.terraform/
+terraform/digitalocean/.terraform.lock.hcl
+terraform/digitalocean/terraform.tfvars
+terraform/digitalocean/*.tfvars
+terraform/digitalocean/crash.log
+terraform/digitalocean/crash.*.log
+terraform/digitalocean/.terraformrc
+terraform/digitalocean/terraform.rc
+
+# Ansible sensitive files
+ansible/inventory/hosts.yml
+ansible/.vault_pass
+ansible/*.retry
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.env
+**/.env
+**/.env.local
+**/.env.production
+
+# SSH keys and credentials
+.ssh/
+**/.ssh/
+ssh_keys/
+jenkins_key*
+known_hosts
+
+# Docker secrets
+docker-compose.override.yml
+**/secrets/
+**/credentials/
+
+# Jenkins sensitive data
+jenkins/secrets/
+jenkins/*.key
+jenkins/initialAdminPassword
+jenkins/.env
+
+# Database credentials
+*.sql
+**/database.yml
+**/database.yaml
+
+# API tokens and passwords
+token.txt
+password.txt
+api_key.txt
+credentials.txt
+secrets.txt
+
+# Cloud provider credentials
+.aws/
+.azure/
+.gcp/
+.do/
+
+# Backup files
+*.backup
+*.bak
+*.swp
+*.swo
+*~
+
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/settings.json
+.idea/
+*.iml
+
+# Logs
+*.log
+logs/
+**/*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+ENV/
+env/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Ansible vault
+vault.yml
+*vault*.yml
