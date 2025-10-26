@@ -1,9 +1,9 @@
 output "backend_ip" {
-  value = try(digitalocean_floating_ip.backend_ip.ip_address, null)
+  value = digitalocean_droplet.backend.ipv4_address
 }
 
 output "frontend_ip" {
-  value = try(digitalocean_floating_ip.frontend_ip.ip_address, null)
+  value = digitalocean_droplet.frontend.ipv4_address
 }
 
 output "db_host" {
@@ -23,9 +23,9 @@ output "db_username" {
 }
 
 output "frontend_url" {
-  value = try("http://${digitalocean_floating_ip.frontend_ip.ip_address}:3000", null)
+  value = "http://${digitalocean_droplet.frontend.ipv4_address}:3000"
 }
 
 output "backend_url" {
-  value = try("http://${digitalocean_floating_ip.backend_ip.ip_address}:8000", null)
+  value = "http://${digitalocean_droplet.backend.ipv4_address}:8000"
 }

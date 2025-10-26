@@ -118,13 +118,4 @@ resource "digitalocean_droplet" "frontend" {
   depends_on = [digitalocean_droplet.backend]
 }
 
-# Static IPs for accessing the droplets
-resource "digitalocean_floating_ip" "backend_ip" {
-  region     = var.region
-  droplet_id = digitalocean_droplet.backend.id
-}
 
-resource "digitalocean_floating_ip" "frontend_ip" {
-  region     = var.region
-  droplet_id = digitalocean_droplet.frontend.id
-}
