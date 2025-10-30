@@ -27,7 +27,7 @@ pipeline {
                     sh '''
                         echo "Installing system dependencies..."
                         apt-get update -qq
-                        apt-get install -y -qq postgresql-client libpq-dev gcc
+                        apt-get install -y -qq postgresql postgresql-contrib libpq-dev gcc
                         
                         echo "Installing Python dependencies..."
                         pip install --upgrade pip
