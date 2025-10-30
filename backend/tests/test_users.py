@@ -68,3 +68,45 @@ def test_delete_user(client, session):
     
     response = client.delete("/api/v1/users/1")
     assert response.status_code == 204
+
+
+def test_get_user_not_found(client):
+    """Test get user that doesn't exist"""
+    response = client.get("/api/v1/users/999")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "User not found"
+
+
+def test_create_user_duplicate_email(client, session):
+    """Test create user with duplicate email"""
+    # Create first user
+    user = User(name="Existing User", email="duplicate@example.com")
+    session.add(user)
+    session.commit()
+    
+    # Try to create another user with same email
+    new_user = {
+        "name": "Another User",
+        "email": "duplicate@example.com"
+    }
+    response = client.post("/api/v1/users/", json=new_user)
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Email already registered"
+
+
+def test_update_user_not_found(client):
+    """Test update user that doesn't exist"""
+    updated_data = {
+        "name": "Updated Name",
+        "email": "updated@example.com"
+    }
+    response = client.put("/api/v1/users/999", json=updated_data)
+    assert response.status_code == 404
+    assert response.json()["detail"] == "User not found"
+
+
+def test_delete_user_not_found(client):
+    """Test delete user that doesn't exist"""
+    response = client.delete("/api/v1/users/999")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "User not found"

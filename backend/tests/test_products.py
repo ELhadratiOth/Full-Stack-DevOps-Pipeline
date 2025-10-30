@@ -91,3 +91,29 @@ def test_delete_product(session, client):
     
     response = client.delete("/api/v1/products/1")
     assert response.status_code == 204
+
+
+def test_get_product_not_found(client):
+    """Test get product that doesn't exist"""
+    response = client.get("/api/v1/products/999")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Product not found"
+
+
+def test_update_product_not_found(client):
+    """Test update product that doesn't exist"""
+    updated_data = {
+        "name": "Updated Product",
+        "description": "Updated description",
+        "price": 149.99
+    }
+    response = client.put("/api/v1/products/999", json=updated_data)
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Product not found"
+
+
+def test_delete_product_not_found(client):
+    """Test delete product that doesn't exist"""
+    response = client.delete("/api/v1/products/999")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Product not found"
