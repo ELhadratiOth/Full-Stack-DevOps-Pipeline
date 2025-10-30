@@ -34,6 +34,7 @@ pipeline {
                         pip install -r requirements.txt
                         
                         echo "Running backend tests with coverage..."
+                        export TESTING=true
                         pytest --cov=app --cov-report=xml --cov-report=html --cov-report=term
                     '''
                 }

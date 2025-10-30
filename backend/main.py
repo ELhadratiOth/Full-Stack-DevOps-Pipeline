@@ -1,13 +1,15 @@
 """
 FastAPI Application Entry Point with PostgreSQL Integration
 """
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import health, users, products
 from app.database import init_db
 
-# Initialize database tables on startup
-init_db()
+# Initialize database tables on startup (skip during tests)
+if os.getenv("TESTING") != "true":
+    init_db()
 
 app = FastAPI(
     title="Microservice API",
