@@ -38,15 +38,6 @@ def get_session():
         yield session
 
 
-def init_db():
-    """Initialize database tables"""
+def init_db():  # pragma: no cover
+    """Initialize database tables - production only, not used in tests"""
     SQLModel.metadata.create_all(engine)
-
-
-async def get_db_session() -> Session:
-    """Async database session"""
-    session = SessionLocal()
-    try:
-        yield session
-    finally:
-        session.close()
