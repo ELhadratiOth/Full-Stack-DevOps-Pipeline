@@ -135,16 +135,16 @@ ENVIRONMENT=production
 ENVFILE
                                     
                                     # Stop existing service if running
-                                    docker-compose down || true
+                                    docker compose down || true
                                     
                                     # Build and start services
-                                    docker-compose up -d --build
+                                    docker compose up -d --build
                                     
                                     # Show status
-                                    docker-compose ps
+                                    docker compose ps
                                     
                                     # Show logs
-                                    docker-compose logs --tail=50
+                                    docker compose logs --tail=50
                                     
                                     echo "=== Backend Deployment Complete ==="
 EOF
@@ -191,13 +191,13 @@ EOF
                                     cd frontend
                                     
                                     # Stop existing service if running
-                                    docker-compose down || true
+                                    docker compose down || true
                                     
                                     # Build and start services
-                                    docker-compose up -d --build
+                                    docker compose up -d --build
                                     
                                     # Show status
-                                    docker-compose ps
+                                    docker compose ps
                                     
                                     echo "=== Frontend Deployment Complete ==="
 EOF
