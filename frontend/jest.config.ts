@@ -15,4 +15,5 @@ const config: Config = {
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
-export default createJestConfig(config)
+// eslint-disable-next-line import/no-anonymous-default-export
+export default createJestConfig(config) as any
