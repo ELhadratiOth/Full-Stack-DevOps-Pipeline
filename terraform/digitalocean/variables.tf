@@ -48,3 +48,9 @@ variable "ssh_key_ids" {
   description = "List of existing DigitalOcean SSH key IDs or fingerprints to attach to droplets"
   default     = []
 }
+
+variable "trusted_ip" {
+  type        = string
+  description = "(Optional) Your personal public IP address to allow SSH and admin access (e.g. 1.2.3.4/32). Leave empty to allow SSH from anywhere."
+  default     = ""
+}

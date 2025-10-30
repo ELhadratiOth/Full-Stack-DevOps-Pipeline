@@ -22,7 +22,7 @@ terraform/digitalocean/crash.log
 terraform/digitalocean/crash.*.log
 terraform/digitalocean/.terraformrc
 terraform/digitalocean/terraform.rc
-
+/terraform/digitalocean/secret.auto.tfvars
 # Ansible sensitive files
 ansible/inventory/hosts.yml
 ansible/.vault_pass

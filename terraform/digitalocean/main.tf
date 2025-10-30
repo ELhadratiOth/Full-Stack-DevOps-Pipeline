@@ -16,16 +16,19 @@ resource "digitalocean_firewall" "backend_firewall" {
   name        = "backend-firewall"
   droplet_ids = [digitalocean_droplet.backend.id]
 
+  # SSH: allow only the trusted IP if provided, otherwise keep open (use with caution)
   inbound_rule {
     protocol         = "tcp"
     port_range       = "22"
-    source_addresses = ["0.0.0.0/0", "::/0"]
+    source_addresses = var.trusted_ip != "" ? [var.trusted_ip] : ["0.0.0.0/0", "::/0"]
   }
 
+  # Application port: allow connections from the frontend droplet and the trusted IP (if set).
   inbound_rule {
-    protocol         = "tcp"
-    port_range       = "8000"
-    source_addresses = ["0.0.0.0/0", "::/0"]
+    protocol           = "tcp"
+    port_range         = "8000"
+    source_droplet_ids = [digitalocean_droplet.frontend.id]
+    source_addresses   = var.trusted_ip != "" ? [var.trusted_ip] : []
   }
 
   outbound_rule {
@@ -51,7 +54,7 @@ resource "digitalocean_firewall" "frontend_firewall" {
   inbound_rule {
     protocol         = "tcp"
     port_range       = "22"
-    source_addresses = ["0.0.0.0/0", "::/0"]
+    source_addresses = var.trusted_ip != "" ? [var.trusted_ip] : ["0.0.0.0/0", "::/0"]
   }
 
   inbound_rule {
