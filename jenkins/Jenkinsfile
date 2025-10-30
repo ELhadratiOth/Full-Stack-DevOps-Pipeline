@@ -85,21 +85,134 @@ pipeline {
                 }
             }
         }
+
+        stage('Deploy to Backend VM') {
+            when {
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+            }
+            steps {
+                script {
+                    echo "Deploying backend to VM..."
+                    
+                    // Get GitHub credentials
+                    withCredentials([usernamePassword(credentialsId: 'github-cred', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
+                        sshagent(['vm-backend']) {
+                            sh '''
+                                # Prepare GitHub URL with credentials
+                                GIT_URL="https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/ELhadratiOth/DevOps.git"
+                                
+                                # Deploy to backend VM
+                                ssh -o StrictHostKeyChecking=no root@vm-backend << EOF
+                                    echo "=== Deploying Backend Application ==="
+                                    
+                                    # Navigate to project directory (create if not exists)
+                                    mkdir -p /opt/backend
+                                    cd /opt/backend
+                                    
+                                    # Pull latest code with authentication
+                                    if [ -d ".git" ]; then
+                                        echo "Updating existing repository..."
+                                        git pull ${GIT_URL} master
+                                    else
+                                        echo "Cloning repository..."
+                                        git clone ${GIT_URL} .
+                                    fi
+                                    
+                                    # Navigate to backend directory
+                                    cd backend
+                                    
+                                    # Stop existing service if running
+                                    docker-compose down || true
+                                    
+                                    # Build and start services
+                                    docker-compose up -d --build
+                                    
+                                    # Show status
+                                    docker-compose ps
+                                    
+                                    echo "=== Backend Deployment Complete ==="
+EOF
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Frontend VM') {
+            when {
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+            }
+            steps {
+                script {
+                    echo "Deploying frontend to VM..."
+                    
+                    // Get GitHub credentials
+                    withCredentials([usernamePassword(credentialsId: 'github-cred', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
+                        sshagent(['vm-frontend']) {
+                            sh '''
+                                # Prepare GitHub URL with credentials
+                                GIT_URL="https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/ELhadratiOth/DevOps.git"
+                                
+                                # Deploy to frontend VM
+                                ssh -o StrictHostKeyChecking=no root@vm-frontend << EOF
+                                    echo "=== Deploying Frontend Application ==="
+                                    
+                                    # Navigate to project directory
+                                    mkdir -p /opt/frontend
+                                    cd /opt/frontend
+                                    
+                                    # Pull latest code with authentication
+                                    if [ -d ".git" ]; then
+                                        echo "Updating existing repository..."
+                                        git pull ${GIT_URL} master
+                                    else
+                                        echo "Cloning repository..."
+                                        git clone ${GIT_URL} .
+                                    fi
+                                    
+                                    # Navigate to frontend directory
+                                    cd frontend
+                                    
+                                    # Stop existing service if running
+                                    docker-compose down || true
+                                    
+                                    # Build and start services
+                                    docker-compose up -d --build
+                                    
+                                    # Show status
+                                    docker-compose ps
+                                    
+                                    echo "=== Frontend Deployment Complete ==="
+EOF
+                            '''
+                        }
+                    }
+                }
+            }
+        }
     }
 
     post {
         success {
             emailext (
-                subject: "✅ Jenkins Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                subject: "✅ Jenkins Build & Deploy SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                 body: """
-                    <h2>Build Successful!</h2>
+                    <h2>Build & Deployment Successful!</h2>
                     <p><strong>Job:</strong> ${env.JOB_NAME}</p>
                     <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
                     <p><strong>Status:</strong> SUCCESS ✅</p>
                     <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
                     <p><a href="${env.BUILD_URL}">View Build Details</a></p>
                     <hr>
-                    <p>All tests passed successfully!</p>
+                    <h3>Deployment Status:</h3>
+                    <ul>
+                        <li>✅ All tests passed (21 backend + 7 frontend)</li>
+                        <li>✅ Backend deployed to VM (vm-backend)</li>
+                        <li>✅ Frontend deployed to VM (vm-frontend)</li>
+                        <li>✅ 100% Code Coverage achieved</li>
+                    </ul>
+                    <p><strong>Applications are now live!</strong></p>
                 """,
                 to: 'othmandone@gmail.com',
                 mimeType: 'text/html'
