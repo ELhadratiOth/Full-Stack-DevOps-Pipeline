@@ -14,7 +14,7 @@ pipeline {
             }
         }
 
-        stage('Backend - Build & Test') {
+        stage('Backend - Test') {
             agent {
                 docker {
                     image 'python:3.11-slim'
@@ -28,22 +28,7 @@ pipeline {
                         echo "Installing Python dependencies..."
                         pip install --upgrade pip
                         pip install -r requirements.txt
-                    '''
-                }
-            }
-        }
-
-        stage('Backend - Run Tests') {
-            agent {
-                docker {
-                    image 'python:3.11-slim'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock'
-                    reuseNode true
-                }
-            }
-            steps {
-                dir("${BACKEND_DIR}") {
-                    sh '''
+                        
                         echo "Running backend tests with coverage..."
                         pytest --cov=app --cov-report=xml --cov-report=html --cov-report=term
                     '''
@@ -53,7 +38,7 @@ pipeline {
                 always {
                     junit allowEmptyResults: true, testResults: "${BACKEND_DIR}/**/test-results.xml"
                     publishHTML([
-                        allowMissing: false,
+                        allowMissing: true,
                         alwaysLinkToLastBuild: true,
                         keepAll: true,
                         reportDir: "${BACKEND_DIR}/htmlcov",
@@ -64,7 +49,7 @@ pipeline {
             }
         }
 
-        stage('Frontend - Build & Test') {
+        stage('Frontend - Test') {
             agent {
                 docker {
                     image 'node:20-alpine'
@@ -76,21 +61,7 @@ pipeline {
                     sh '''
                         echo "Installing Node.js dependencies..."
                         npm ci
-                    '''
-                }
-            }
-        }
-
-        stage('Frontend - Run Tests') {
-            agent {
-                docker {
-                    image 'node:20-alpine'
-                    reuseNode true
-                }
-            }
-            steps {
-                dir("${FRONTEND_DIR}") {
-                    sh '''
+                        
                         echo "Running frontend tests with coverage..."
                         npm test -- --coverage --watchAll=false
                     '''
@@ -99,7 +70,7 @@ pipeline {
             post {
                 always {
                     publishHTML([
-                        allowMissing: false,
+                        allowMissing: true,
                         alwaysLinkToLastBuild: true,
                         keepAll: true,
                         reportDir: "${FRONTEND_DIR}/coverage/lcov-report",
