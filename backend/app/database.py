@@ -1,7 +1,7 @@
 """Database configuration and connection"""
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-from sqlmodel import SQLModel
+from sqlalchemy.orm import sessionmaker
+from sqlmodel import SQLModel, Session
 import os
 from dotenv import load_dotenv
 

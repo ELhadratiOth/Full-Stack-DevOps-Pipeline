@@ -1,7 +1,6 @@
 """Product endpoints with database integration"""
 from fastapi import APIRouter, status, Depends, HTTPException
-from sqlalchemy.orm import Session
-from sqlmodel import select
+from sqlmodel import Session, select
 from app.models.models import Product, ProductCreate, ProductRead
 from app.database import get_session
 from typing import List
