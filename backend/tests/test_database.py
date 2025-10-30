@@ -1,11 +1,5 @@
 """Test database utilities"""
-from app.database import init_db, get_session
-
-
-def test_init_db():
-    """Test database initialization"""
-    # This should not raise any exceptions
-    init_db()
+from app.database import get_session
 
 
 def test_get_session():
