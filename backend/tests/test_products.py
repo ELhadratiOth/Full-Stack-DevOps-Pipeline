@@ -1,14 +1,38 @@
 """Test product endpoints"""
+from app.models.models import Product
 
-def test_list_products(client):
+
+def test_list_products(session, client):
     """Test list all products"""
+    # Create test data
+    product = Product(
+        id=1,
+        name="Test Product",
+        description="A test product",
+        price=99.99,
+        in_stock=True
+    )
+    session.add(product)
+    session.commit()
+    
     response = client.get("/api/v1/products/")
     assert response.status_code == 200
     products = response.json()
     assert len(products) > 0
 
-def test_get_product(client):
+def test_get_product(session, client):
     """Test get a specific product"""
+    # Create test data
+    product = Product(
+        id=1,
+        name="Test Product",
+        description="A test product",
+        price=99.99,
+        in_stock=True
+    )
+    session.add(product)
+    session.commit()
+    
     response = client.get("/api/v1/products/1")
     assert response.status_code == 200
     product = response.json()
@@ -29,8 +53,19 @@ def test_create_product(client):
     assert created_product["name"] == "Test Product"
     assert created_product["price"] == 99.99
 
-def test_update_product(client):
+def test_update_product(session, client):
     """Test update a product"""
+    # Create test data
+    product = Product(
+        id=1,
+        name="Original Product",
+        description="Original description",
+        price=99.99,
+        in_stock=True
+    )
+    session.add(product)
+    session.commit()
+    
     updated_data = {
         "name": "Updated Product",
         "description": "Updated description",
@@ -41,7 +76,18 @@ def test_update_product(client):
     updated_product = response.json()
     assert updated_product["name"] == "Updated Product"
 
-def test_delete_product(client):
+def test_delete_product(session, client):
     """Test delete a product"""
+    # Create test data
+    product = Product(
+        id=1,
+        name="Product to Delete",
+        description="This product will be deleted",
+        price=49.99,
+        in_stock=True
+    )
+    session.add(product)
+    session.commit()
+    
     response = client.delete("/api/v1/products/1")
     assert response.status_code == 204
