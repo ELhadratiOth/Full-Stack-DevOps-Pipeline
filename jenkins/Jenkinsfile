@@ -1,0 +1,168 @@
+pipeline {
+    agent any
+
+    environment {
+        REPO_URL = 'https://github.com/ELhadratiOth/DevOps.git'
+        BACKEND_DIR = 'backend'
+        FRONTEND_DIR = 'frontend'
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git credentialsId: 'github-cred', url: "${REPO_URL}", branch: 'master'
+            }
+        }
+
+        stage('Backend - Build & Test') {
+            agent {
+                docker {
+                    image 'python:3.11-slim'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock'
+                    reuseNode true
+                }
+            }
+            steps {
+                dir("${BACKEND_DIR}") {
+                    sh '''
+                        echo "Installing Python dependencies..."
+                        pip install --upgrade pip
+                        pip install -r requirements.txt
+                    '''
+                }
+            }
+        }
+
+        stage('Backend - Run Tests') {
+            agent {
+                docker {
+                    image 'python:3.11-slim'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock'
+                    reuseNode true
+                }
+            }
+            steps {
+                dir("${BACKEND_DIR}") {
+                    sh '''
+                        echo "Running backend tests with coverage..."
+                        pytest --cov=app --cov-report=xml --cov-report=html --cov-report=term
+                    '''
+                }
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: "${BACKEND_DIR}/**/test-results.xml"
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: "${BACKEND_DIR}/htmlcov",
+                        reportFiles: 'index.html',
+                        reportName: 'Backend Coverage Report'
+                    ])
+                }
+            }
+        }
+
+        stage('Frontend - Build & Test') {
+            agent {
+                docker {
+                    image 'node:20-alpine'
+                    reuseNode true
+                }
+            }
+            steps {
+                dir("${FRONTEND_DIR}") {
+                    sh '''
+                        echo "Installing Node.js dependencies..."
+                        npm ci
+                    '''
+                }
+            }
+        }
+
+        stage('Frontend - Run Tests') {
+            agent {
+                docker {
+                    image 'node:20-alpine'
+                    reuseNode true
+                }
+            }
+            steps {
+                dir("${FRONTEND_DIR}") {
+                    sh '''
+                        echo "Running frontend tests with coverage..."
+                        npm test -- --coverage --watchAll=false
+                    '''
+                }
+            }
+            post {
+                always {
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: "${FRONTEND_DIR}/coverage/lcov-report",
+                        reportFiles: 'index.html',
+                        reportName: 'Frontend Coverage Report'
+                    ])
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            emailext (
+                subject: "✅ Jenkins Build SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                    <h2>Build Successful!</h2>
+                    <p><strong>Job:</strong> ${env.JOB_NAME}</p>
+                    <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
+                    <p><strong>Status:</strong> SUCCESS ✅</p>
+                    <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+                    <p><a href="${env.BUILD_URL}">View Build Details</a></p>
+                    <hr>
+                    <p>All tests passed successfully!</p>
+                """,
+                to: 'othmandone@gmail.com',
+                mimeType: 'text/html'
+            )
+        }
+        failure {
+            emailext (
+                subject: "❌ Jenkins Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                    <h2>Build Failed!</h2>
+                    <p><strong>Job:</strong> ${env.JOB_NAME}</p>
+                    <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
+                    <p><strong>Status:</strong> FAILURE ❌</p>
+                    <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+                    <p><a href="${env.BUILD_URL}">View Build Details</a></p>
+                    <p><a href="${env.BUILD_URL}/console">View Console Output</a></p>
+                    <hr>
+                    <p>Please check the console output for error details.</p>
+                """,
+                to: 'othmandone@gmail.com',
+                mimeType: 'text/html'
+            )
+        }
+        unstable {
+            emailext (
+                subject: "⚠️ Jenkins Build UNSTABLE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+                    <h2>Build Unstable!</h2>
+                    <p><strong>Job:</strong> ${env.JOB_NAME}</p>
+                    <p><strong>Build Number:</strong> ${env.BUILD_NUMBER}</p>
+                    <p><strong>Status:</strong> UNSTABLE ⚠️</p>
+                    <p><strong>Duration:</strong> ${currentBuild.durationString}</p>
+                    <p><a href="${env.BUILD_URL}">View Build Details</a></p>
+                    <hr>
+                    <p>Some tests may have failed or there are quality issues.</p>
+                """,
+                to: 'othmandone@gmail.com',
+                mimeType: 'text/html'
+            )
+        }
+    }
+}
