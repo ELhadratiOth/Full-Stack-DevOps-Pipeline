@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { User, Product, ApiResponse } from '../types'
+import { User, Product, HealthResponse, ReadinessResponse } from '../types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -58,11 +58,11 @@ export const productsApi = {
 
 // Health API
 export const healthApi = {
-  check: async (): Promise<ApiResponse<any>> => {
+  check: async (): Promise<HealthResponse> => {
     const response = await apiClient.get('/health')
     return response.data
   },
-  ready: async (): Promise<ApiResponse<any>> => {
+  ready: async (): Promise<ReadinessResponse> => {
     const response = await apiClient.get('/readiness')
     return response.data
   },

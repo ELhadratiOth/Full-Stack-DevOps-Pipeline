@@ -18,3 +18,14 @@ export interface ApiResponse<T> {
   error?: string
   message?: string
 }
+
+export interface HealthResponse {
+  status: string
+  service: string
+  version: string
+}
+
+export interface ReadinessResponse {
+  ready: boolean
+  message: string
+}
