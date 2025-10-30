@@ -11,6 +11,7 @@ services:
       - DEBUG=${DEBUG:-False}
       - APP_NAME=${APP_NAME:-Microservice API}
       - ENVIRONMENT=${ENVIRONMENT:-production}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8000}
     env_file:
       - .env
     restart: unless-stopped

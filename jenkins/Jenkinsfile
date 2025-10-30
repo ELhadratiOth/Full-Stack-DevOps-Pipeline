@@ -127,11 +127,12 @@ pipeline {
                                     
                                     # Create production .env file with database credentials
                                     echo "Creating production environment file..."
-                                    cat > .env << 'ENVFILE'
+                                    cat > .env << ENVFILE
 DATABASE_URL=postgresql://doadmin:${DB_PASSWORD}@microservice-db-do-user-27173136-0.k.db.ondigitalocean.com:25060/defaultdb?sslmode=require
 DEBUG=False
 APP_NAME=Microservice API
 ENVIRONMENT=production
+CORS_ORIGINS=http://${FRONTEND_VM_IP}:3000,http://${BACKEND_VM_IP}:8000,http://localhost:3000
 ENVFILE
                                     
                                     # Stop existing service if running
@@ -189,6 +190,9 @@ EOF
                                     
                                     # Navigate to frontend directory
                                     cd frontend
+                                    
+                                    # Export environment variable for docker compose build
+                                    export NEXT_PUBLIC_API_URL=http://${BACKEND_VM_IP}:8000
                                     
                                     # Stop existing service if running
                                     docker compose down || true
