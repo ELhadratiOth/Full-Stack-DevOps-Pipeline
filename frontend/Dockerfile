@@ -9,6 +9,10 @@ RUN npm ci
 # Copy application code
 COPY . .
 
+# Build argument for API URL
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 # Build Next.js app
 RUN npm run build
 
