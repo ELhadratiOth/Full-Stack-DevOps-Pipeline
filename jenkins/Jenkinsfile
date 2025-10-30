@@ -5,6 +5,7 @@ pipeline {
         REPO_URL = 'https://github.com/ELhadratiOth/DevOps.git'
         BACKEND_DIR = 'backend'
         FRONTEND_DIR = 'frontend'
+
     }
 
     stages {
@@ -101,8 +102,8 @@ pipeline {
                                 # Prepare GitHub URL with credentials
                                 GIT_URL="https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/ELhadratiOth/DevOps.git"
                                 
-                                # Deploy to backend VM
-                                ssh -o StrictHostKeyChecking=no root@vm-backend << EOF
+                                # Deploy to backend VM using IP address
+                                ssh -o StrictHostKeyChecking=no root@${BACKEND_VM_IP} << EOF
                                     echo "=== Deploying Backend Application ==="
                                     
                                     # Navigate to project directory (create if not exists)
@@ -154,8 +155,8 @@ EOF
                                 # Prepare GitHub URL with credentials
                                 GIT_URL="https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/ELhadratiOth/DevOps.git"
                                 
-                                # Deploy to frontend VM
-                                ssh -o StrictHostKeyChecking=no root@vm-frontend << EOF
+                                # Deploy to frontend VM using IP address
+                                ssh -o StrictHostKeyChecking=no root@${FRONTEND_VM_IP} << EOF
                                     echo "=== Deploying Frontend Application ==="
                                     
                                     # Navigate to project directory
