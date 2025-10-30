@@ -95,8 +95,11 @@ pipeline {
                 script {
                     echo "Deploying backend to VM..."
                     
-                    // Get GitHub credentials
-                    withCredentials([usernamePassword(credentialsId: 'github-cred', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
+                    // Get GitHub and Database credentials
+                    withCredentials([
+                        usernamePassword(credentialsId: 'github-cred', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD'),
+                        string(credentialsId: 'db-password', variable: 'DB_PASSWORD')
+                    ]) {
                         sshagent(['vm-backend']) {
                             sh '''
                                 # Prepare GitHub URL with credentials
@@ -122,6 +125,15 @@ pipeline {
                                     # Navigate to backend directory
                                     cd backend
                                     
+                                    # Create production .env file with database credentials
+                                    echo "Creating production environment file..."
+                                    cat > .env << 'ENVFILE'
+DATABASE_URL=postgresql://app_user:${DB_PASSWORD}@microservice-db-do-user-27173136-0.k.db.ondigitalocean.com:25060/microservice_db?sslmode=require
+DEBUG=False
+APP_NAME=Microservice API
+ENVIRONMENT=production
+ENVFILE
+                                    
                                     # Stop existing service if running
                                     docker-compose down || true
                                     
@@ -130,6 +142,9 @@ pipeline {
                                     
                                     # Show status
                                     docker-compose ps
+                                    
+                                    # Show logs
+                                    docker-compose logs --tail=50
                                     
                                     echo "=== Backend Deployment Complete ==="
 EOF
