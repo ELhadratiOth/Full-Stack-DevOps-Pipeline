@@ -107,6 +107,41 @@
       when: docker_installed.rc != 0
       tags: [docker]
 
+    # Python pip optimization
+    - name: Upgrade pip and install pip tools
+      shell: python3 -m pip install --upgrade pip setuptools wheel
+      tags: [python]
+
+    - name: Create pip cache directory
+      file:
+        path: /root/.cache/pip
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      tags: [python]
+
+    - name: Create .pip directory for pip configuration
+      file:
+        path: /root/.pip
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      tags: [python]
+
+    - name: Create pip configuration file
+      copy:
+        dest: /root/.pip/pip.conf
+        content: |
+          [global]
+          cache-dir = /root/.cache/pip
+          index-url = https://pypi.org/simple/
+        mode: '0644'
+        owner: root
+        group: root
+      tags: [python]
+
     # PostgreSQL client
     - name: Install PostgreSQL client and development libraries
       apt:

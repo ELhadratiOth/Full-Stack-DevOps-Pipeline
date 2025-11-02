@@ -147,17 +147,104 @@
         msg: 'Python 3.11 installed: {{ python_version.stdout }}'
       tags: python
 
-    # Additional utilities
-    - name: Install additional tools
+    - name: Upgrade pip and install pip tools
+      shell: python3.11 -m pip install --upgrade pip setuptools wheel
+      tags: python
+
+    - name: Configure pip cache directory for jenkins user
+      file:
+        path: '{{ jenkins_home }}/.cache/pip'
+        state: directory
+        owner: '{{ jenkins_user }}'
+        group: '{{ jenkins_user }}'
+        mode: '0755'
+      tags: python
+
+    - name: Create .pip directory for jenkins user
+      file:
+        path: '{{ jenkins_home }}/.pip'
+        state: directory
+        owner: '{{ jenkins_user }}'
+        group: '{{ jenkins_user }}'
+        mode: '0755'
+      tags: python
+
+    - name: Create pip configuration file
+      copy:
+        dest: '{{ jenkins_home }}/.pip/pip.conf'
+        content: |
+          [global]
+          cache-dir = {{ jenkins_home }}/.cache/pip
+          index-url = https://pypi.org/simple/
+        mode: '0644'
+        owner: '{{ jenkins_user }}'
+        group: '{{ jenkins_user }}'
+      tags: python
+
+    # Node.js Installation
+    - name: Add NodeSource GPG key
+      apt_key:
+        url: https://keyserver.ubuntu.com/pks/lookup?op=get&fingerprint=on&search=0x1655A0AB68576280
+        state: present
+      tags: nodejs
+
+    - name: Add NodeSource repository
+      apt_repository:
+        repo: 'deb https://deb.nodesource.com/node_20.x {{ ansible_distribution_release }} main'
+        state: present
+      tags: nodejs
+
+    - name: Remove conflicting npm package
+      apt:
+        name: npm
+        state: absent
+      tags: nodejs
+
+    - name: Install Node.js (npm will be installed as dependency)
+      apt:
+        name: nodejs
+        state: present
+        update_cache: yes
+      tags: nodejs
+
+    - name: Verify Node.js installation
+      shell: node --version
+      register: node_version
+      tags: nodejs
+
+    - name: Display Node.js version
+      debug:
+        msg: 'Node.js installed: {{ node_version.stdout }}'
+      tags: nodejs
+
+    - name: Verify npm installation
+      shell: npm --version
+      register: npm_version
+      tags: nodejs
+
+    - name: Display npm version
+      debug:
+        msg: 'npm installed: {{ npm_version.stdout }}'
+      tags: nodejs
+
+    # Additional utilities and build tools
+    - name: Install build tools and development libraries
       apt:
         name:
+          - build-essential
+          - gcc
+          - g++
+          - make
+          - libpq-dev
+          - postgresql-client
+          - python3.11-venv
+          - python3.11-dev
           - wget
           - curl
           - vim
           - net-tools
           - htop
           - openssh-server
-          - postgresql-client
         state: present
       tags: utilities
 
@@ -318,6 +405,14 @@
           shell: git --version
           register: git_check
 
+        - name: Check Node.js
+          shell: node --version
+          register: node_check
+
+        - name: Check npm
+          shell: npm --version
+          register: npm_check
+
         - name: Check Jenkins user
           shell: id {{ jenkins_user }}
           register: jenkins_user_check
@@ -328,6 +423,8 @@
               Java: {{ java_check.stdout_lines[0] if java_check.stdout_lines else 'Not found' }}
               Python: {{ python_check.stdout }}
               pip: {{ pip_check.stdout }}
+              Node.js: {{ node_check.stdout }}
+              npm: {{ npm_check.stdout }}
               Docker: {{ docker_check.stdout }}
               Docker Compose: {{ compose_check.stdout }}
               Git: {{ git_check.stdout }}
@@ -351,7 +448,9 @@
 
           Installed Software:
           - Java: OpenJDK 17
-          - Python: Python 3 with pip
+          - Python: Python 3.11 with pip
+          - Node.js: Node.js 20
+          - npm: Latest
           - Docker: Latest
           - Docker Compose: Latest
           - Git: Latest
