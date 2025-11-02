@@ -114,7 +114,7 @@ pipeline {
                                     # Create production .env file with database credentials
                                     echo "Creating production environment file..."
                                     cat > .env << ENVFILE
-DATABASE_URL=postgresql://doadmin:${DB_PASSWORD}@microservice-db-do-user-27173136-0.k.db.ondigitalocean.com:25060/defaultdb?sslmode=require
+DATABASE_URL=postgresql://doadmin:${DB_PASSWORD}@microservice-db-do-user-27173136-0.i.db.ondigitalocean.com:25060/defaultdb?sslmode=require
 DEBUG=False
 APP_NAME=Microservice API
 ENVIRONMENT=production

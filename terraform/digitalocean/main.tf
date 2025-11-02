@@ -51,19 +51,39 @@ resource "digitalocean_firewall" "backend_firewall" {
   name        = "backend-firewall"
   droplet_ids = [digitalocean_droplet.backend.id]
 
-  # SSH: allow only the trusted IP if provided, otherwise keep open (use with caution)
+  # SSH: allow from Jenkins agent
+  inbound_rule {
+    protocol           = "tcp"
+    port_range         = "22"
+    source_droplet_ids = [digitalocean_droplet.jenkins_agent.id]
+  }
+
+  # SSH: allow from trusted IP
   inbound_rule {
     protocol         = "tcp"
     port_range       = "22"
-    source_addresses = var.trusted_ip != "" ? [var.trusted_ip] : ["0.0.0.0/0", "::/0"]
+    source_addresses = [var.trusted_ip]
   }
 
-  # Application port: allow connections from the frontend droplet, Jenkins agent, and the trusted IP (if set).
+  # Application port: allow from frontend droplet
   inbound_rule {
     protocol           = "tcp"
     port_range         = "8000"
-    source_droplet_ids = [digitalocean_droplet.frontend.id, digitalocean_droplet.jenkins_agent.id]
-    source_addresses   = var.trusted_ip != "" ? [var.trusted_ip] : []
+    source_droplet_ids = [digitalocean_droplet.frontend.id]
+  }
+
+  # Application port: allow from Jenkins agent
+  inbound_rule {
+    protocol           = "tcp"
+    port_range         = "8000"
+    source_droplet_ids = [digitalocean_droplet.jenkins_agent.id]
+  }
+
+  # Application port: allow from trusted IP
+  inbound_rule {
+    protocol         = "tcp"
+    port_range       = "8000"
+    source_addresses = [var.trusted_ip]
   }
 
   outbound_rule {
@@ -86,28 +106,31 @@ resource "digitalocean_firewall" "frontend_firewall" {
   name        = "frontend-firewall"
   droplet_ids = [digitalocean_droplet.frontend.id]
 
+  # SSH: allow from Jenkins agent
+  inbound_rule {
+    protocol           = "tcp"
+    port_range         = "22"
+    source_droplet_ids = [digitalocean_droplet.jenkins_agent.id]
+  }
+
+  # SSH: allow from trusted IP
   inbound_rule {
     protocol         = "tcp"
     port_range       = "22"
-    source_addresses = var.trusted_ip != "" ? [var.trusted_ip] : ["0.0.0.0/0", "::/0"]
+    source_addresses = [var.trusted_ip]
   }
 
+  # Frontend app port: allow from anywhere
   inbound_rule {
     protocol         = "tcp"
     port_range       = "3000"
     source_addresses = ["0.0.0.0/0", "::/0"]
   }
 
-  # Allow Jenkins agent to connect to frontend on port 3000 and SSH on port 22 (for deployments)
+  # Frontend app port: allow from Jenkins agent (redundant but explicit)
   inbound_rule {
     protocol           = "tcp"
     port_range         = "3000"
-    source_droplet_ids = [digitalocean_droplet.jenkins_agent.id]
-  }
-
-  inbound_rule {
-    protocol           = "tcp"
-    port_range         = "22"
     source_droplet_ids = [digitalocean_droplet.jenkins_agent.id]
   }
 
