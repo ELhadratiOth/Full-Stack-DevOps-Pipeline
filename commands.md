@@ -33,6 +33,16 @@ ansible-playbook -i ../inventory/hosts.yml frontend.yml
 
 ansible-playbook -i ../inventory/hosts.yml site.yml
 
+### Run Jenkins agent playbook
+
+ansible-playbook -i ../inventory/hosts.yml jenkins_agent.yml
+
+### Run Jenkins agent with specific tags
+
+ansible-playbook -i ../inventory/hosts.yml jenkins_agent.yml --tags docker
+ansible-playbook -i ../inventory/hosts.yml jenkins_agent.yml --tags ssh
+ansible-playbook -i ../inventory/hosts.yml jenkins_agent.yml --tags java
+
 ## Jenkins Container
 
 ### Connect to Jenkins container
@@ -53,3 +63,11 @@ docker compose down
 
 cd jenkins
 docker compose up -d --build
+
+# IP Address Retrieval
+
+## Get Public IP of Backend Server
+
+```bash
+Invoke-RestMethod https://ipinfo.io/ip
+```

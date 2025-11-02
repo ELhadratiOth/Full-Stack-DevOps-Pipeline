@@ -1,9 +1,13 @@
 ---
-# Master playbook to provision both VMs
-- name: Provision all servers
+# Master playbook to provision all servers
+- name: Provision frontend server
   import_playbook: frontend.yml
   tags: [frontend]
 
 - name: Provision backend server
   import_playbook: backend.yml
   tags: [backend]
+
+- name: Configure Jenkins agent worker node
+  import_playbook: jenkins_agent.yml
+  tags: [jenkins_agent]

@@ -1,5 +1,9 @@
 pipeline {
-    agent any
+    agent {
+        node {
+            label 'docker && testing'
+        }
+    }
 
     environment {
         REPO_URL = 'https://github.com/ELhadratiOth/DevOps.git'
@@ -16,13 +20,6 @@ pipeline {
         }
 
         stage('Backend - Test') {
-            agent {
-                docker {
-                    image 'python:3.11-slim'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock'
-                    reuseNode true
-                }
-            }
             steps {
                 dir("${BACKEND_DIR}") {
                     sh '''
@@ -56,12 +53,6 @@ pipeline {
         }
 
         stage('Frontend - Test') {
-            agent {
-                docker {
-                    image 'node:20-alpine'
-                    reuseNode true
-                }
-            }
             steps {
                 dir("${FRONTEND_DIR}") {
                     sh '''

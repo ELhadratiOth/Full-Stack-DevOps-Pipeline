@@ -4,9 +4,10 @@
 
 ```
 playbooks/
-├── site.yml          # Master playbook (runs all)
-├── frontend.yml      # Frontend VM provisioning
-└── backend.yml       # Backend VM provisioning
+├── site.yml              # Master playbook (runs all)
+├── frontend.yml          # Frontend VM provisioning
+├── backend.yml           # Backend VM provisioning
+└── jenkins_agent.yml     # Jenkins agent worker node setup
 ```
 
 ## Installed Software
@@ -14,18 +15,24 @@ playbooks/
 ### Frontend VM
 
 - **Node.js 20.x** (with npm)
-- **Global packages**: pm2, yarn
 - **Docker** (latest)
-- **Nginx** (web server/reverse proxy)
 - Essential tools: git, curl, wget, vim, htop
 
 ### Backend VM
 
 - **Python 3.11** (with pip)
-- **Python packages**: virtualenv, pipenv, gunicorn, uvicorn
 - **Docker** (latest)
 - **PostgreSQL client** (for database connections)
 - Essential tools: git, curl, wget, vim, htop, monitoring tools
+
+### Jenkins Agent VM
+
+- **Java 11** (OpenJDK for Jenkins agent)
+- **Docker** (latest) - for running test containers
+- **Docker Compose** (latest) - for orchestrating test environments
+- **Git** (latest) - for cloning repositories
+- **Jenkins User** - non-root user for running jobs
+- Essential tools: curl, wget, vim, net-tools, htop
 
 ## Usage
 
@@ -62,19 +69,13 @@ ansible-playbook -i ../inventory/hosts.yml site.yml --tags firewall
 
 # Install only Node.js on frontend
 ansible-playbook -i ../inventory/hosts.yml frontend.yml --tags nodejs
-```
 
-### Check mode (dry run):
+# Configure Jenkins agent worker node
+ansible-playbook -i ../inventory/hosts.yml jenkins_agent.yml
 
-```bash
-ansible-playbook -i ../inventory/hosts.yml site.yml --check
-```
-
-### Verbose output:
-
-```bash
-ansible-playbook -i ../inventory/hosts.yml site.yml -v
-# or -vv, -vvv for more verbosity
+# Configure Jenkins agent with specific tags
+ansible-playbook -i ../inventory/hosts.yml jenkins_agent.yml --tags docker
+ansible-playbook -i ../inventory/hosts.yml jenkins_agent.yml --tags ssh
 ```
 
 ## Optimization Features

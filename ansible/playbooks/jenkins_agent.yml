@@ -1,0 +1,329 @@
+---
+# Ansible Playbook to Configure Jenkins Agent Worker Node
+# This playbook automates the setup of the Jenkins agent with all dependencies
+# Usage: ansible-playbook playbooks/jenkins_agent.yml -i inventory/hosts.yml
+
+- name: Configure Jenkins Agent Worker Node
+  hosts: jenkins_agent
+  become: yes # Run with sudo
+  vars:
+    jenkins_user: jenkins
+    jenkins_home: /home/jenkins
+    jenkins_workspace: /home/jenkins/jenkins
+    docker_group: docker
+
+  tasks:
+    # System Update
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+      tags: system
+
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+        autoremove: yes
+        autoclean: yes
+      tags: system
+
+    # Java Installation
+    - name: Install OpenJDK 17
+      apt:
+        name: openjdk-17-jdk
+        state: present
+      tags: java
+
+    - name: Verify Java installation
+      shell: java -version
+      register: java_version
+      tags: java
+
+    - name: Display Java version
+      debug:
+        msg: 'Java installed: {{ java_version.stderr_lines[0] }}'
+      tags: java
+
+    # Docker Installation
+    - name: Install Docker prerequisites
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
+      tags: docker
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      tags: docker
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: 'deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable'
+        state: present
+      tags: docker
+
+    - name: Install Docker
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+      tags: docker
+
+    - name: Install Docker Compose (standalone)
+      shell: |
+        curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        chmod +x /usr/local/bin/docker-compose
+      args:
+        creates: /usr/local/bin/docker-compose
+      tags: docker
+
+    - name: Enable Docker service
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+      tags: docker
+
+    - name: Verify Docker installation
+      shell: docker --version
+      register: docker_version
+      tags: docker
+
+    - name: Display Docker version
+      debug:
+        msg: 'Docker installed: {{ docker_version.stdout }}'
+      tags: docker
+
+    # Git Installation
+    - name: Install Git
+      apt:
+        name: git
+        state: present
+      tags: git
+
+    - name: Verify Git installation
+      shell: git --version
+      register: git_version
+      tags: git
+
+    - name: Display Git version
+      debug:
+        msg: 'Git installed: {{ git_version.stdout }}'
+      tags: git
+
+    # Additional utilities
+    - name: Install additional tools
+      apt:
+        name:
+          - wget
+          - curl
+          - vim
+          - net-tools
+          - htop
+          - openssh-server
+        state: present
+      tags: utilities
+
+    # Jenkins User Setup
+    - name: Create jenkins user
+      user:
+        name: '{{ jenkins_user }}'
+        shell: /bin/bash
+        home: '{{ jenkins_home }}'
+        createhome: yes
+        state: present
+      tags: jenkins_user
+
+    - name: Add jenkins user to docker group
+      user:
+        name: '{{ jenkins_user }}'
+        groups: '{{ docker_group }}'
+        append: yes
+      tags: jenkins_user
+
+    - name: Allow jenkins user to use docker without sudo
+      lineinfile:
+        path: /etc/sudoers
+        line: '{{ jenkins_user }} ALL=(ALL) NOPASSWD:ALL'
+        state: present
+      tags: jenkins_user
+
+    # SSH Setup
+    - name: Create .ssh directory for jenkins user
+      file:
+        path: '{{ jenkins_home }}/.ssh'
+        state: directory
+        owner: '{{ jenkins_user }}'
+        group: '{{ jenkins_user }}'
+        mode: '0700'
+      tags: ssh
+
+    - name: Add public key to authorized_keys
+      authorized_key:
+        user: '{{ jenkins_user }}'
+        state: present
+        key: "{{ lookup('file', '/tmp/ssh-keys/id_ed25519.pub') }}"
+      tags: ssh
+
+    - name: Set authorized_keys permissions
+      file:
+        path: '{{ jenkins_home }}/.ssh/authorized_keys'
+        owner: '{{ jenkins_user }}'
+        group: '{{ jenkins_user }}'
+        mode: '0600'
+      tags: ssh
+
+    # Jenkins Workspace
+    - name: Create jenkins workspace directory
+      file:
+        path: '{{ jenkins_workspace }}'
+        state: directory
+        owner: '{{ jenkins_user }}'
+        group: '{{ jenkins_user }}'
+        mode: '0755'
+      tags: jenkins_workspace
+
+    - name: Create jenkins workspace subdirectories
+      file:
+        path: '{{ jenkins_workspace }}/{{ item }}'
+        state: directory
+        owner: '{{ jenkins_user }}'
+        group: '{{ jenkins_user }}'
+        mode: '0755'
+      loop:
+        - workspace
+        - logs
+        - tools
+      tags: jenkins_workspace
+
+    # SSH Configuration
+    - name: Ensure SSH service is enabled
+      systemd:
+        name: ssh
+        enabled: yes
+        state: started
+      tags: ssh
+
+    - name: Configure SSH for key-based authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '{{ item.regexp }}'
+        line: '{{ item.line }}'
+        state: present
+      loop:
+        - {
+            regexp: '^#?PubkeyAuthentication',
+            line: 'PubkeyAuthentication yes',
+          }
+        - {
+            regexp: '^#?PasswordAuthentication',
+            line: 'PasswordAuthentication no',
+          }
+        - {
+            regexp: '^#?PermitRootLogin',
+            line: 'PermitRootLogin prohibit-password',
+          }
+      notify: restart ssh
+      tags: ssh
+
+    # Security hardening
+    - name: Set up firewall (UFW)
+      ufw:
+        rule: allow
+        port: '{{ item }}'
+        proto: tcp
+      loop:
+        - '22' # SSH
+        - '50000' # Jenkins JNLP
+      tags: firewall
+
+    - name: Enable UFW
+      ufw:
+        state: enabled
+      tags: firewall
+
+    # Docker pull test images
+    - name: Pull Docker test images
+      shell: |
+        docker pull python:3.11-slim &
+        docker pull node:20-alpine &
+        docker pull hello-world &
+        wait
+      become_user: '{{ jenkins_user }}'
+      tags: docker_images
+      async: 300
+      poll: 10
+
+    # Verification
+    - name: Verify all installations
+      block:
+        - name: Check Java
+          shell: java -version 2>&1 | head -1
+          register: java_check
+
+        - name: Check Docker
+          shell: docker --version
+          register: docker_check
+
+        - name: Check Docker Compose
+          shell: docker-compose --version
+          register: compose_check
+
+        - name: Check Git
+          shell: git --version
+          register: git_check
+
+        - name: Check Jenkins user
+          shell: id {{ jenkins_user }}
+          register: jenkins_user_check
+
+        - name: Display verification results
+          debug:
+            msg: |
+              Java: {{ java_check.stdout_lines[0] if java_check.stdout_lines else 'Not found' }}
+              Docker: {{ docker_check.stdout }}
+              Docker Compose: {{ compose_check.stdout }}
+              Git: {{ git_check.stdout }}
+              Jenkins User: {{ jenkins_user_check.stdout }}
+
+      tags: verification
+
+    # Final status
+    - name: Agent configuration complete
+      debug:
+        msg: |
+          ========================================
+          Jenkins Agent Configuration Complete!
+          ========================================
+
+          Agent Details:
+          - Jenkins User: {{ jenkins_user }}
+          - Jenkins Home: {{ jenkins_home }}
+          - Workspace: {{ jenkins_workspace }}
+          - SSH Key: Configured ({{ jenkins_user }}@agent)
+
+          Installed Software:
+          - Java: OpenJDK 17
+          - Docker: Latest
+          - Docker Compose: Latest
+          - Git: Latest
+
+          Firewall:
+          - Port 22 (SSH): Open
+          - Port 50000 (JNLP): Open
+          ========================================
+      tags: always
+
+  handlers:
+    - name: restart ssh
+      systemd:
+        name: ssh
+        state: restarted

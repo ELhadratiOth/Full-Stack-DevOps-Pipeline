@@ -5,7 +5,7 @@ variable "digitalocean_token" {
 
 variable "region" {
   type    = string
-  default = "nyc3"
+  default = "fra1"
 }
 
 variable "image_slug" {
@@ -35,7 +35,7 @@ variable "db_name" {
 
 variable "db_username" {
   type    = string
-  default = "app_user"
+  default = "doadmin"
 }
 
 variable "db_size" {
@@ -51,6 +51,18 @@ variable "ssh_key_ids" {
 
 variable "trusted_ip" {
   type        = string
-  description = "(Optional) Your personal public IP address to allow SSH and admin access (e.g. 1.2.3.4/32). Leave empty to allow SSH from anywhere."
+  description = ""
+  default     = ""
+}
+
+variable "agent_size" {
+  type        = string
+  description = "Droplet size for Jenkins agent worker node"
+  default     = "s-2vcpu-2gb"
+}
+
+variable "jenkins_master_ip" {
+  type        = string
+  description = "IP address of the Jenkins master/controller machine (your machine where Jenkins is hosted)"
   default     = ""
 }

@@ -32,7 +32,7 @@ DevOps/
 │
 ├── docker-compose.yml         # Multi-container orchestration
 ├── terraform/                 # Infrastructure as Code
-└── .github/workflows/         # CI/CD pipelines (optional)
+
 ```
 
 ## Quick Start
@@ -195,16 +195,6 @@ docker run -p 8000:8000 fastapi-backend:latest
 docker run -p 3000:3000 -e NEXT_PUBLIC_API_URL=http://localhost:8000 nextjs-frontend:latest
 ```
 
-## CI/CD Integration
-
-### GitHub Actions Example Workflows
-
-Create `.github/workflows/` directory and add:
-
-- `backend-ci.yml` - Backend testing and building
-- `frontend-ci.yml` - Frontend testing and building
-- `deploy.yml` - Deployment pipeline
-
 ### Key Testing Commands
 
 ```bash
@@ -219,8 +209,66 @@ npm test -- --coverage --watchAll=false  # For CI/CD
 
 To add PostgreSQL support, update:
 
-- `backend/requirements.txt` - Add `sqlalchemy`, `psycopg2-binary`
+- `backend/requirements.txt`
 - `docker-compose.yml` - Add PostgreSQL service
+
+## Security & Firewall Configuration
+
+This project is deployed on DigitalOcean with a secure firewall configuration to restrict backend access.
+
+### Firewall Rules
+
+- **Backend API (Port 8000)**: Access restricted to:
+
+  - Frontend VM droplet (internal DigitalOcean network)
+  - Your personal machine (via your public IP)
+  - Backend localhost (for internal testing)
+
+- **Frontend (Port 3000)**: Open to all (public facing)
+- **SSH Access**: Restricted to your personal machine's public IP only
+
+### Trusted IP Management
+
+Your public IP is configured in `terraform/digitalocean/secret.auto.tfvars`:
+
+```
+# This file is NOT committed to git (.gitignore protected)
+trusted_ip = "YOUR.PUBLIC.IP/32"
+```
+
+**To update your IP:**
+
+1. Discover your current public IP:
+
+   ```bash
+   # Windows
+   Invoke-RestMethod https://ipinfo.io/ip
+
+   # Linux/Mac
+   curl https://ipinfo.io/ip
+   ```
+
+2. Update `terraform/digitalocean/secret.auto.tfvars`:
+
+   ```
+   trusted_ip = "NEW.IP.ADDRESS/32"
+   ```
+
+3. Apply firewall changes:
+   ```bash
+   cd terraform/digitalocean
+   terraform apply -var-file=secret.auto.tfvars
+   ```
+
+### CORS Configuration
+
+Backend CORS is configured via environment variables during Jenkins deployment. The `CORS_ORIGINS` includes:
+
+- Frontend VM
+- Backend VM (for internal communication)
+- Localhost (for development)
+
+This allows the frontend to safely communicate with the backend API.
 
 ## Environment Variables
 
@@ -231,12 +279,6 @@ DEBUG=True
 DATABASE_URL=postgresql://user:password@localhost/dbname
 ```
 
-### Frontend (`.env.local`)
-
-```
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
-
 ## Development Tools
 
 ### Backend
@@ -245,7 +287,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 - **Server**: Uvicorn
 - **Testing**: Pytest
 - **Validation**: Pydantic
-- **ORM**: SQLAlchemy (optional)
+- **ORM**: SQLAlchemy
 
 ### Frontend
 
@@ -304,35 +346,6 @@ docker-compose up -d --build --no-cache
 docker-compose up -d --build backend
 ```
 
-## Troubleshooting
-
-### Backend Connection Issues
-
-```bash
-# Check if backend is running
-curl http://localhost:8000/health
-
-# Check logs
-docker-compose logs backend
-```
-
-### Frontend Connection Issues
-
-```bash
-# Verify API URL in .env.local
-cat .env.local
-
-# Check browser console for errors
-```
-
-### Port Already in Use
-
-```bash
-# Change ports in docker-compose.yml or use different ports:
-docker run -p 8001:8000 fastapi-backend:latest
-docker run -p 3001:3000 nextjs-frontend:latest
-```
-
 ## Performance Optimization
 
 ### Backend
@@ -354,30 +367,3 @@ docker run -p 3001:3000 nextjs-frontend:latest
 - Input validation with Pydantic
 - SQL injection prevention with SQLAlchemy ORM
 - XSS prevention with React
-
-## Contributing
-
-1. Follow the project structure
-2. Write tests for new features
-3. Update documentation
-4. Use pre-commit hooks for linting
-
-## Next Steps
-
-1. **Add Database**: Implement PostgreSQL integration
-2. **Add Auth**: Implement JWT authentication
-3. **Add Caching**: Redis integration
-4. **Add Monitoring**: Prometheus + Grafana
-5. **Add Logging**: ELK stack or similar
-6. **Deploy**: Deploy to DigitalOcean, AWS, or Azure
-
-## Resources
-
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Docker Documentation](https://docs.docker.com/)
-- [Terraform Documentation](https://www.terraform.io/docs/)
-
-## License
-
-This project is open source and available for educational and testing purposes.

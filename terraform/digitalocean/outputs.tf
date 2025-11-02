@@ -29,3 +29,8 @@ output "frontend_url" {
 output "backend_url" {
   value = "http://${digitalocean_droplet.backend.ipv4_address}:8000"
 }
+
+output "jenkins_agent_ip" {
+  value       = digitalocean_droplet.jenkins_agent.ipv4_address
+  description = "IP address of the Jenkins agent worker droplet for SSH configuration"
+}
