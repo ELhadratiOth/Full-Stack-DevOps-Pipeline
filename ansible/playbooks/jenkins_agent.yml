@@ -77,7 +77,7 @@
         state: present
       tags: docker
 
-    - name: Install Docker Compose (standalone)
+    - name: Install Docker Compose
       shell: |
         curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
         chmod +x /usr/local/bin/docker-compose
@@ -119,6 +119,34 @@
         msg: 'Git installed: {{ git_version.stdout }}'
       tags: git
 
+    # Python Installation
+    - name: Add deadsnakes PPA for Python 3.11
+      apt_repository:
+        repo: 'ppa:deadsnakes/ppa'
+        state: present
+      tags: python
+
+    - name: Install Python 3.11 and pip
+      apt:
+        name:
+          - python3.11
+          - python3.11-venv
+          - python3.11-dev
+          - python3-pip
+        state: present
+        update_cache: yes
+      tags: python
+
+    - name: Verify Python 3.11 installation
+      shell: python3.11 --version
+      register: python_version
+      tags: python
+
+    - name: Display Python version
+      debug:
+        msg: 'Python 3.11 installed: {{ python_version.stdout }}'
+      tags: python
+
     # Additional utilities
     - name: Install additional tools
       apt:
@@ -129,6 +157,7 @@
           - net-tools
           - htop
           - openssh-server
+          - postgresql-client
         state: present
       tags: utilities
 
@@ -269,6 +298,14 @@
           shell: java -version 2>&1 | head -1
           register: java_check
 
+        - name: Check Python
+          shell: python3 --version
+          register: python_check
+
+        - name: Check pip
+          shell: python3 -m pip --version
+          register: pip_check
+
         - name: Check Docker
           shell: docker --version
           register: docker_check
@@ -289,6 +326,8 @@
           debug:
             msg: |
               Java: {{ java_check.stdout_lines[0] if java_check.stdout_lines else 'Not found' }}
+              Python: {{ python_check.stdout }}
+              pip: {{ pip_check.stdout }}
               Docker: {{ docker_check.stdout }}
               Docker Compose: {{ compose_check.stdout }}
               Git: {{ git_check.stdout }}
@@ -312,6 +351,7 @@
 
           Installed Software:
           - Java: OpenJDK 17
+          - Python: Python 3 with pip
           - Docker: Latest
           - Docker Compose: Latest
           - Git: Latest

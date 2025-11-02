@@ -25,15 +25,15 @@ pipeline {
                     sh '''
                         echo "Installing system dependencies..."
                         sudo apt-get update -qq
-                        sudo apt-get install -y -qq postgresql postgresql-contrib libpq-dev gcc
+                        sudo apt-get install -y -qq python3.11 python3.11-venv python3.11-dev postgresql postgresql-contrib libpq-dev gcc
                         
                         echo "Installing Python dependencies..."
-                        pip install --upgrade pip
-                        pip install -r requirements.txt
+                        python3.11 -m pip install --upgrade pip
+                        python3.11 -m pip install -r requirements.txt
                         
                         echo "Running backend tests with coverage..."
                         export TESTING=true
-                        pytest --cov=app --cov-report=xml --cov-report=html --cov-report=term
+                        python3.11 -m pytest --cov=app --cov-report=xml --cov-report=html --cov-report=term
                     '''
                 }
             }
