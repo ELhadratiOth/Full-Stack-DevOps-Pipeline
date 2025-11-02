@@ -56,6 +56,12 @@ pipeline {
             steps {
                 dir("${FRONTEND_DIR}") {
                     sh '''
+                        echo "Installing Node.js and npm..."
+                        sudo apt-get update -qq
+                        sudo apt-get install -y -qq curl gnupg2
+                        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+                        sudo apt-get install -y -qq nodejs
+                        
                         echo "Installing Node.js dependencies..."
                         npm ci
                         
