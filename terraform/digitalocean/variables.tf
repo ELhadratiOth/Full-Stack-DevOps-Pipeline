@@ -15,12 +15,12 @@ variable "image_slug" {
 
 variable "backend_size" {
   type    = string
-  default = "s-1vcpu-1gb"
+  default = "s-2vcpu-2gb"
 }
 
 variable "frontend_size" {
   type    = string
-  default = "s-1vcpu-1gb"
+  default = "s-2vcpu-2gb"
 }
 
 variable "db_cluster_name" {

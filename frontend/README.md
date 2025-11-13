@@ -1,4 +1,4 @@
-# Frontend - Next.js Microservice
+# Frontend - Next.js 
 
 ## Overview
 This is a Next.js frontend for testing automated building, testing, and deployment processes.
@@ -31,8 +31,8 @@ frontend/
 
 ### Prerequisites
 - Node.js 18+
-- npm or yarn
-- Docker (optional)
+- npm 
+- Docker 
 
 ### Setup
 1. Install dependencies:
@@ -125,13 +125,6 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 - TypeScript for type safety
 - ESLint for code linting
 - Prettier for code formatting
-
-## CI/CD Integration
-This project is ready for CI/CD pipelines:
-- GitHub Actions
-- GitLab CI
-- Jenkins
-- Azure DevOps
 
 ## Features
 - ✅ Server-side rendering with Next.js

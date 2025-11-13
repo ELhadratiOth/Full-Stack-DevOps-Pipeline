@@ -13,7 +13,7 @@ Jenkins docker compose file (and instructions) to configure your jenkins control
 2. Create a file named **.env** and add the following:
 
    ```yml
-   JENKINS_HOME_PATH=/home/user/jenkins_sandbox_home # your local jenkins_home path.
+   JENKINS_HOME_PATH=/home/user/jenkins_sandbox_home 
    JENKINS_AGENT_SSH_PUBLIC_KEY=<< leave empty for now >>
    ```
 

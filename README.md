@@ -1,4 +1,4 @@
-# Microservice Project - Testing & Automation Example
+# Microservice Project - Testing & Automation 
 
 A complete full-stack microservice application for learning and testing automated building, testing, and deployment processes.
 
@@ -221,15 +221,15 @@ This project is deployed on DigitalOcean with a secure firewall configuration to
 - **Backend API (Port 8000)**: Access restricted to:
 
   - Frontend VM droplet (internal DigitalOcean network)
-  - Your personal machine (via your public IP)
+  - My personal machine (via my public IP)
   - Backend localhost (for internal testing)
 
 - **Frontend (Port 3000)**: Open to all (public facing)
-- **SSH Access**: Restricted to your personal machine's public IP only
+- **SSH Access**: Restricted to my personal machine's public IP only
 
 ### Trusted IP Management
 
-Your public IP is configured in `terraform/digitalocean/secret.auto.tfvars`:
+My public IP is configured in `terraform/digitalocean/secret.auto.tfvars`:
 
 ```
 # This file is NOT committed to git (.gitignore protected)
@@ -302,6 +302,8 @@ DATABASE_URL=postgresql://user:password@localhost/dbname
 - **Backend**: [Backend README](./backend/README.md)
 - **Frontend**: [Frontend README](./frontend/README.md)
 - **Terraform**: [Terraform README](./terraform/README.md)
+- **Ansible**: [Ansible README](./ansible/README.md)
+- **JENKINS**: [Jenkins README](./jenkins/README.md)
 
 ## API Documentation
 
@@ -315,9 +317,6 @@ DATABASE_URL=postgresql://user:password@localhost/dbname
 ```bash
 # Stop all containers
 docker-compose down
-
-# Remove images
-docker-compose down --rmi all
 
 # Remove volumes
 docker-compose down -v

@@ -151,7 +151,3 @@
         name: Europe/Berlin
       tags: [optimization]
 
-    - name: Disable swap for better performance
-      shell: swapoff -a
-      when: ansible_swaptotal_mb > 0
-      tags: [optimization]

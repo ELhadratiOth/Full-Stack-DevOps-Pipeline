@@ -1,8 +1,8 @@
-# Backend - FastAPI Microservice
+# Backend - FastAPI 
 
 ## Overview
 
-This is a FastAPI-based backend microservice for testing automated building, testing, and deployment processes.
+This is a FastAPI-based backend for testing automated building, testing, and deployment processes.
 
 ## Project Structure
 
@@ -32,8 +32,8 @@ backend/
 ### Prerequisites
 
 - Python 3.11+
-- pip or poetry
-- Docker (optional)
+- pip
+- Docker
 
 ### Setup
 
@@ -41,7 +41,7 @@ backend/
 
    ```bash
    python -m venv venv
-   source venv/Scripts/activate  # On Windows
+   source venv/Scripts/activate 
    ```
 
 2. Install dependencies:
@@ -134,25 +134,8 @@ DEBUG=True
 DATABASE_URL=postgresql://user:password@localhost/dbname
 ```
 
-## Development
-
-### Code Style
-
-Uses FastAPI best practices and PEP 8
-
 ### Hot Reload
 
 ```bash
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
-
-## CI/CD Integration
-
-This project is ready for CI/CD pipelines:
-
-- GitHub Actions
-- GitLab CI
-- Jenkins
-- Azure DevOps
-
-See `.github/workflows` for GitHub Actions examples.

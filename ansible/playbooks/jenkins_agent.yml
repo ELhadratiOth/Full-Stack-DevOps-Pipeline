@@ -151,36 +151,6 @@
       shell: python3.11 -m pip install --upgrade pip setuptools wheel
       tags: python
 
-    - name: Configure pip cache directory for jenkins user
-      file:
-        path: '{{ jenkins_home }}/.cache/pip'
-        state: directory
-        owner: '{{ jenkins_user }}'
-        group: '{{ jenkins_user }}'
-        mode: '0755'
-      tags: python
-
-    - name: Create .pip directory for jenkins user
-      file:
-        path: '{{ jenkins_home }}/.pip'
-        state: directory
-        owner: '{{ jenkins_user }}'
-        group: '{{ jenkins_user }}'
-        mode: '0755'
-      tags: python
-
-    - name: Create pip configuration file
-      copy:
-        dest: '{{ jenkins_home }}/.pip/pip.conf'
-        content: |
-          [global]
-          cache-dir = {{ jenkins_home }}/.cache/pip
-          index-url = https://pypi.org/simple/
-        mode: '0644'
-        owner: '{{ jenkins_user }}'
-        group: '{{ jenkins_user }}'
-      tags: python
-
     # Node.js Installation
     - name: Add NodeSource GPG key
       apt_key:
@@ -227,27 +197,6 @@
         msg: 'npm installed: {{ npm_version.stdout }}'
       tags: nodejs
 
-    # Additional utilities and build tools
-    - name: Install build tools and development libraries
-      apt:
-        name:
-          - build-essential
-          - gcc
-          - g++
-          - make
-          - libpq-dev
-          - postgresql-client
-          - python3.11-venv
-          - python3.11-dev
-          - wget
-          - curl
-          - vim
-          - net-tools
-          - htop
-          - openssh-server
-        state: present
-      tags: utilities
-
     # Jenkins User Setup
     - name: Create jenkins user
       user:
@@ -271,6 +220,58 @@
         line: '{{ jenkins_user }} ALL=(ALL) NOPASSWD:ALL'
         state: present
       tags: jenkins_user
+
+    # Configure pip cache for jenkins user (after user creation)
+    - name: Configure pip cache directory for jenkins user
+      file:
+        path: '{{ jenkins_home }}/.cache/pip'
+        state: directory
+        owner: '{{ jenkins_user }}'
+        group: '{{ jenkins_user }}'
+        mode: '0755'
+      tags: python
+
+    - name: Create .pip directory for jenkins user
+      file:
+        path: '{{ jenkins_home }}/.pip'
+        state: directory
+        owner: '{{ jenkins_user }}'
+        group: '{{ jenkins_user }}'
+        mode: '0755'
+      tags: python
+
+    - name: Create pip configuration file
+      copy:
+        dest: '{{ jenkins_home }}/.pip/pip.conf'
+        content: |
+          [global]
+          cache-dir = {{ jenkins_home }}/.cache/pip
+          index-url = https://pypi.org/simple/
+        mode: '0644'
+        owner: '{{ jenkins_user }}'
+        group: '{{ jenkins_user }}'
+      tags: python
+
+    # Additional utilities and build tools
+    - name: Install build tools and development libraries
+      apt:
+        name:
+          - build-essential
+          - gcc
+          - g++
+          - make
+          - libpq-dev
+          - postgresql-client
+          - python3.11-venv
+          - python3.11-dev
+          - wget
+          - curl
+          - vim
+          - net-tools
+          - htop
+          - openssh-server
+        state: present
+      tags: utilities
 
     # SSH Setup
     - name: Create .ssh directory for jenkins user

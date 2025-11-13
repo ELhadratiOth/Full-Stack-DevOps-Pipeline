@@ -34,40 +34,37 @@ The infrastructure uses a security model that restricts backend access to author
 
 **Inbound Rules:**
 
-- **SSH (Port 22)**: Restricted to your personal machine's public IP
+- **SSH (Port 22)**: Restricted to my personal machine's public IP
 - **HTTP (Port 8000)**: Allowed from:
   - Frontend droplet (internal DigitalOcean network)
-  - Your personal machine (via trusted_ip variable)
+  - My personal machine (via trusted_ip variable)
 
 #### Frontend (Port 3000)
 
 **Inbound Rules:**
 
-- **SSH (Port 22)**: Restricted to your personal machine's public IP
+- **SSH (Port 22)**: Restricted to my personal machine's public IP
 - **HTTP (Port 3000)**: Open to all (public facing application)
 
 ### Trusted IP Configuration
 
-The `trusted_ip` variable controls access from your personal machine:
+The `trusted_ip` variable controls access from my personal machine:
 
 ```hcl
 variable "trusted_ip" {
   type        = string
-  description = "Your personal public IP for firewall rules"
+  description = "My personal public IP for firewall rules"
   default     = ""
 }
 ```
 
-#### Updating Your Trusted IP
+#### Updating My Trusted IP
 
-**Step 1: Discover your current public IP**
+**Step 1: Discover my current public IP**
 
 ```bash
 # Windows PowerShell
 Invoke-RestMethod https://ipinfo.io/ip
-
-# Linux/Mac
-curl https://ipinfo.io/ip
 ```
 
 **Step 2: Update the local secrets file**
@@ -75,7 +72,7 @@ curl https://ipinfo.io/ip
 Edit `terraform/digitalocean/secret.auto.tfvars`:
 
 ```hcl
-trusted_ip = "YOUR.PUBLIC.IP/32"
+trusted_ip = "MY.PUBLIC.IP/32"
 ```
 
 **Note:** This file is in `.gitignore` and not committed to version control.
@@ -186,14 +183,13 @@ Contains resource definitions:
 - **Droplets**: Backend and Frontend VMs
 - **Database**: Managed PostgreSQL cluster
 - **Firewall**: Inbound/outbound rules for both VMs
-- **DNS**: Optional DNS record configuration
 
 ### variables.tf
 
 Defines input variables:
 
 - `region`: DigitalOcean region (default: "nyc3")
-- `trusted_ip`: Your personal public IP (loaded from secret.auto.tfvars)
+- `trusted_ip`: My personal public IP (loaded from secret.auto.tfvars)
 - `database_name`: PostgreSQL database name
 - `droplet_size`: VM size and resources
 
@@ -205,72 +201,3 @@ Exports important values after deployment:
 - Frontend VM IP address
 - Database connection string
 - Firewall rule IDs
-
-### terraform.tfvars
-
-Default variable values (committed to git).
-
-### secret.auto.tfvars
-
-**Local-only file containing:**
-
-```hcl
-trusted_ip = "YOUR.IP/32"
-```
-
-## Troubleshooting
-
-### Terraform Can't Connect to DigitalOcean
-
-**Error:** `Error: Unauthorized: Token is invalid`
-
-**Solution:**
-
-```bash
-# Verify token is set
-echo $env:DIGITALOCEAN_TOKEN  # Windows
-echo $DIGITALOCEAN_TOKEN       # Linux/Mac
-
-# Ensure token has proper permissions in DigitalOcean Console
-```
-
-### Firewall Rules Not Updating
-
-**Solution:**
-
-```bash
-# Refresh Terraform state
-terraform refresh -var-file=secret.auto.tfvars
-
-# Check current configuration
-terraform show
-
-# Reapply if needed
-terraform apply -var-file=secret.auto.tfvars
-```
-
-### SSH Access Still Restricted After Firewall Update
-
-**Possible causes:**
-
-- Your public IP changed (ISP rotation)
-- Firewall rules not applied yet
-
-**Solution:**
-
-1. Verify your current IP: `Invoke-RestMethod https://ipinfo.io/ip`
-2. Update `secret.auto.tfvars` with new IP
-3. Reapply: `terraform apply -var-file=secret.auto.tfvars`
-4. Wait 1-2 minutes for rules to take effect
-
-### State File Corruption
-
-**Solution:**
-
-```bash
-# Backup current state
-cp terraform.tfstate terraform.tfstate.backup
-
-# Refresh from actual resources
-terraform refresh -var-file=secret.auto.tfvars
-```

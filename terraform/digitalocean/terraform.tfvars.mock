@@ -1,0 +1,9 @@
+digitalocean_token = "dop_v1_mock_token_00000000000000000000000000000000"
+region             = "fra1"
+backend_size       = "s-2vcpu-2gb"
+frontend_size      = "s-2vcpu-2gb"
+db_size            = "db-s-2vcpu-2gb"
+db_cluster_name    = "microservice-db"
+db_name            = "microservice_db"
+db_username        = "app_user"
+ssh_key_ids        = ["00000000"]

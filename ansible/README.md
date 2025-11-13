@@ -109,9 +109,4 @@ Backend VM includes a `.env.example` template at `/opt/backend/.env.example` wit
 - Database connection settings
 - Application configuration
 
-Copy and customize:
 
-```bash
-cp /opt/backend/.env.example /opt/backend/.env
-# Edit with your actual values
-```
