@@ -84,7 +84,8 @@ pipeline {
                     // Get GitHub and Database credentials
                     withCredentials([
                         usernamePassword(credentialsId: 'github-cred', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD'),
-                        string(credentialsId: 'db-password', variable: 'DB_PASSWORD')
+                        string(credentialsId: 'db-password', variable: 'DB_PASSWORD'),
+                        string(credentialsId: 'db-hostname', variable: 'DB_HOSTNAME')
                     ]) {
                         sshagent(['vm-backend']) {
                             sh '''
@@ -111,10 +112,10 @@ pipeline {
                                     # Navigate to backend directory
                                     cd backend
                                     
-                                    # Create production .env file with database credentials
+                                    # Create production .env file with database credentials from Jenkins vault
                                     echo "Creating production environment file..."
                                     cat > .env << ENVFILE
-DATABASE_URL=postgresql://doadmin:${DB_PASSWORD}@microservice-db-do-user-27173136-0.i.db.ondigitalocean.com:25060/defaultdb?sslmode=require
+DATABASE_URL=postgresql://doadmin:${DB_PASSWORD}@${DB_HOSTNAME}:25060/defaultdb?sslmode=require
 DEBUG=False
 APP_NAME=Microservice API
 ENVIRONMENT=production
