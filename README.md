@@ -2,6 +2,11 @@
 
 A complete full-stack microservice application for learning and testing automated building, testing, and deployment processes.
 
+## Architecture
+
+![DevOps Architecture Diagram](./imgs/architecture.gif)
+
+
 ## Project Structure
 
 ```
@@ -34,6 +39,7 @@ DevOps/
 ├── terraform/                 # Infrastructure as Code
 
 ```
+
 
 ## Quick Start
 
